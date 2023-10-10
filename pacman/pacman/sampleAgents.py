@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 # sampleAgents.py
 # parsons/07-oct-2017
 #
@@ -32,6 +35,8 @@ import api
 import random
 import game
 import util
+from collections import deque
+import math
 
 # RandomAgent
 #
@@ -40,12 +45,279 @@ import util
 class RandomAgent(Agent):
 
     def getAction(self, state):
-        # Get the actions we can try, and remove "STOP" if that is one of them.
+        # Get the actions we can try, and remove "STOP" if that is one of them to avoid stopping
         legal = api.legalActions(state)
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
         # Random choice between the legal options.
         return api.makeMove(random.choice(legal), legal)
+
+
+
+
+
+# Initialize an empty grid
+initial_grid = [[' ' for _ in range(20)] for _ in range(11)]
+last_pacman_position = None
+last_ghost_positions = set()
+
+def visualise_grid(width, height, food_positions, wall_positions, ghost_positions, grid, pacman):
+
+    global last_pacman_position, last_ghost_positions
+
+    # print("Ghost positions: ", ghost_positions)
+    ghost_positions = [(int(math.floor(x)), int(math.floor(y))) for x, y in ghost_positions]
+    # print("Last ghost positions: ", last_ghost_positions)
+
+    if last_pacman_position:
+        last_x, last_y = last_pacman_position
+        grid[last_y][last_x] = ' '
+
+    # Clear last Ghost positions
+    for (x, y) in last_ghost_positions:
+        x, y = map(int, (x, y))  # convert to int
+        grid[y][x] = ' '
+
+        # grid = grid[int(y)][int(x)]
+        # grid[math.floor(y)][math.floor(x)] = ' '
+
+    for y in reversed(range(height)):
+        for x in range(width):
+            if (x, y) == pacman:
+                grid[y][x] = 'O'
+                last_pacman_position = (x, y)
+            elif (x, y) in wall_positions:
+                grid[y][x] = '@'
+            elif (x, y) in ghost_positions:
+                grid[y][x] = '!'
+            elif (x, y) in food_positions:
+                grid[y][x] = '.'
+    
+    # Update last ghost positions
+    last_ghost_positions = set(ghost_positions)
+
+    for row in reversed(grid):
+        print(''.join(row))
+
+
+
+
+
+def propagate_utility(start_positions, wall_positions, width, height, initial_utility, decay_factor):
+    utility_map = [[0 for _ in range(width)] for _ in range(height)]
+    visited = set()
+
+    # Initialize BFS queue with start positions and their initial utilities
+    queue = deque([(pos, initial_utility) for pos in start_positions])
+
+    while queue:
+        (x, y), utility = queue.popleft()
+
+        if (x, y) in visited:
+            continue
+
+        visited.add((x, y))
+
+        # Update utility_map with the maximum utility
+        # utility_map[y][x] = max(utility_map[y][x], utility)
+        utility_map[y][x] += utility  # Sum up utilities
+
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            next_x, next_y = x + dx, y + dy
+            next_pos = (next_x, next_y)
+
+            if 0 <= next_x < width and 0 <= next_y < height:
+                if next_pos not in wall_positions and next_pos not in visited:
+                    # Decay the utility value as it propagates
+                    next_utility = utility * decay_factor
+
+                    if abs(next_utility) > 0.001:  # Stop propagating if utility is too low
+                        queue.append((next_pos, next_utility))
+
+    return utility_map
+
+
+
+
+
+def find_utility(state, food_positions):
+
+    def food_utility_map(state, food_positions, wall_positions):
+        
+        # print("Start positions for food:", food_positions)  # Debug print statement
+        food_utility_map = propagate_utility(food_positions, wall_positions, 20, 11, 10, 0.9)
+        return food_utility_map
+
+    def ghost_utility_map(state, ghost_positions, wall_positions):
+
+        # print("Start positions for ghosts:", ghost_positions)  # Debug print statement
+        ghost_utility_map = propagate_utility(ghost_positions, wall_positions, 20, 11, -25, 0.9)
+        return ghost_utility_map
+    
+
+
+    ghost_positions = [(int(x), int(y)) for x, y in api.ghosts(state)]  # Convert to integers
+    wall_positions = api.walls(state)
+
+    food_utility_map = food_utility_map(state, food_positions, wall_positions)
+    ghost_utility_map = ghost_utility_map(state, ghost_positions, wall_positions)
+
+    # Combine the utilities
+    combined_utility_map = [[0 for _ in range(20)] for _ in range(11)]
+    for y in range(11):
+        for x in range(20):
+            combined_utility_map[y][x] = food_utility_map[y][x] + ghost_utility_map[y][x]
+
+    # Define possible moves for agent in current position
+    agent_x, agent_y = api.whereAmI(state)
+    moves = {'North': (0, 1), 'East': (1, 0), 'South': (0, -1), 'West': (-1, 0)}
+
+    print("Utility in each direction:")
+    for direction, (dx, dy) in moves.items():
+        next_x, next_y = agent_x + dx, agent_y + dy
+        if 0 <= next_x < 20 and 0 <= next_y < 11:  # Replace with actual grid size
+            if (next_x, next_y) not in wall_positions:
+                utility = combined_utility_map[next_y][next_x]
+                print("{}: {}".format(direction, utility))
+
+    max_utility = float('-inf')
+    best_direction = None
+
+    # Map from your 'moves' directions to the actions that your Agent class understands
+    direction_to_action = {'North': 'North', 'East': 'East', 'South': 'South', 'West': 'West'}
+
+    legal = api.legalActions(state)
+
+    for direction, (dx, dy) in moves.items():
+        next_x, next_y = agent_x + dx, agent_y + dy
+        if 0 <= next_x < 20 and 0 <= next_y < 11:  # Replace with actual grid size
+            if (next_x, next_y) not in wall_positions:
+                utility = combined_utility_map[next_y][next_x]
+
+                # Check if the direction is also a legal move
+                if direction_to_action[direction] in legal:
+                    if utility > max_utility:
+                        max_utility = utility
+                        best_direction = direction_to_action[direction]
+
+    return best_direction
+
+
+
+
+class AgentUtility(Agent):
+
+    def __init__(self):
+        self.grid = [[' ' for _ in range(20)] for _ in range(11)]
+        self.global_food_positions = set()
+        self.all_positions_ever = set()
+        self.all_positions_remaining = set()
+        self.eaten_food_positions = set()
+        self.last_agent_position = None  # Track last position of the agent
+
+        self.path = []
+
+    def is_looping(self, N=8):
+        if len(self.path) < 2 * N:  # Not enough data to check for loops
+            return False
+    
+        last_N_positions = self.path[-N:]
+        prev_N_positions = self.path[-(2 * N):-N]
+        
+        if last_N_positions == prev_N_positions:
+            return True
+        
+        return False
+
+    def explore(self, state):
+        return api.makeMove(random.choice(api.legalActions(state)), api.legalActions(state))
+
+    def getAction(self, state):
+
+        # Update global food positions with newly visible food
+        visible_food_positions = set(api.food(state))
+
+        # Update global positions with all positions ever seen
+        self.all_positions_ever.update(visible_food_positions)
+
+        # Find the food that has been eaten
+        current_agent_position = api.whereAmI(state)
+        if self.last_agent_position in self.all_positions_ever and self.last_agent_position not in visible_food_positions:
+            # print("Food eaten at position: ", self.last_agent_position)
+            self.eaten_food_positions = self.eaten_food_positions.union({self.last_agent_position})
+        self.last_agent_position = current_agent_position
+
+        # Update set of all positions with food that has been eaten
+        self.all_positions_remaining = self.all_positions_ever - self.eaten_food_positions
+
+        # Set goal foods
+        self.global_food_positions = self.all_positions_remaining
+
+        # print("Visible food positions: ", api.food(state))
+        # print("All positions ever:", self.all_positions_ever)
+        # print("Eaten food positions:", self.eaten_food_positions)
+        # print("All positions remaining:", self.all_positions_remaining)
+
+        # Now use self.global_food_positions to compute utility
+        pacman = api.whereAmI(state)
+        ghost_positions = api.ghosts(state)
+        visualise_grid(20, 11, self.global_food_positions, api.walls(state), ghost_positions, self.grid, pacman)
+
+        # Call find_utility to print the utility in each direction
+        best_direction = find_utility(state, self.global_food_positions)
+
+        self.path.append(current_agent_position)
+
+        if best_direction:
+            if not self.is_looping():
+                print("Best direction: ", best_direction)
+                return api.makeMove(best_direction, api.legalActions(state))
+            else: 
+                print("Loop detected")
+                return best_direction == self.explore(state)
+        else:
+            print("No best direction found (No utility)")
+            return self.explore(state)
+
+
+
+
+
+
+
+
+
+
+
+        # legal = api.legalActions(state)
+
+        # print("Food: ", api.food(state))
+        # print("Walls: ", api.walls(state))
+
+        # Find closest food using A* search
+        # my_pos = api.whereAmI(state)
+        # food = api.food(state)
+
+        # Use min(A, manhattanDistance to B), considering walls
+        # closest_food = min(food, key=lambda x: util.manhattanDistance(my_pos, x))
+        # print("Closest food: ", closest_food)
+
+        # Make move
+        # make_move = api.makeMove(random.choice(legal), legal)
+
+
+
+
+
+
+        # Define food that was eaten
+        food_eaten = []
+        for i in range(len(food)): # Look at previous food stack
+            if food[i] not in api.food(state): # if food is not in current food stack, it was eaten
+                food_eaten.append(food[i])
+        print("Food eaten: ", food_eaten)
+
+        return make_move
 
 # RandomishAgent
 #

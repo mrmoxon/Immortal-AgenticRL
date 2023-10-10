@@ -11,7 +11,7 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
-
+import keyboard
 import time
 try: 
     import pacman
@@ -50,11 +50,16 @@ class PacmanGraphics:
         if speed != None:
             global SLEEP_TIME
             SLEEP_TIME = speed
+        self.paused = False
+        keyboard.on_press_key("space", self.toggle_pause)
+
+    def toggle_pause(self, e):
+        self.paused = not self.paused
 
     def initialize(self, state, isBlue = False):
         self.draw(state)
         self.pause()
-        self.turn = 0
+        self.turn = 0 
         self.agentCounter = 0
 
     def update(self, state):
@@ -70,6 +75,9 @@ class PacmanGraphics:
                 self.pause()
         if state._win or state._lose:
             self.draw(state)
+        
+        while self.paused:
+            time.sleep(0.1)
 
     def pause(self):
         time.sleep(SLEEP_TIME)
