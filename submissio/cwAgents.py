@@ -46,8 +46,10 @@ class MyBellmanUpdateAgent(Agent):
         self.ghost_path_reward = 15
         self.total_chase_time = 0
         self.total_chase_distance = 0
-        self.initial_food_locations = set()
         self.initialized = False
+        self.initial_food_locations = set()
+        self.initial_setup_done = False
+        self.initial_good_locations = set()
         self.edible_ghost_reward = 0
 
         # Aesthetics
@@ -102,6 +104,11 @@ class MyBellmanUpdateAgent(Agent):
                 print "      " if reward is None else "{:6.2f}".format(reward),
             print
         print
+
+
+
+
+
 
     ### Helper functions for 1, 2.
 
@@ -212,6 +219,32 @@ class MyBellmanUpdateAgent(Agent):
                 # Update the reward for the cell
                 self.rewards[y][x] += food_effect
 
+
+    def coordinate_chase_value(self, state, coordinate_location):
+        ghost_states_with_times = api.ghostStatesWithTimes(state)
+
+        # Extracting ghost positions as tuples of integers
+        ghost_positions = []
+        for ghost_state_with_time in ghost_states_with_times:
+            ghost_position = ghost_state_with_time[0]  # The position tuple
+            x, y = ghost_position  # Unpacking the position tuple
+            ghost_positions.append((int(x), int(y)))
+
+        total_distance = 0
+
+        # Calculate the sum of Manhattan distances from the coordinate_location to each ghost
+        for ghost in ghost_positions:
+            distance_to_ghost = self.manhattan_distance(coordinate_location, ghost)
+            total_distance += distance_to_ghost
+
+        path_found = total_distance > 0
+        return None, total_distance, path_found
+
+    def manhattan_distance(self, point1, point2):
+        return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+
+
+
     def coordinate_chase_value(self, state, coordinate_location):
         ghost_states_with_times = api.ghostStatesWithTimes(state)
 
@@ -260,6 +293,12 @@ class MyBellmanUpdateAgent(Agent):
         pacman = api.whereAmI(state)
         ghost_states_with_times = api.ghostStatesWithTimes(state)
         walls = api.walls(state)
+
+        food_locations = api.food(state) 
+        # Prioritize food if less than 30 pellets remain
+        if len(food_locations) < 30:
+            print "Prioritizing food over ghosts."
+            return False, -1, []
 
         min_distance = float('inf')
         min_time_remaining = 0
@@ -404,9 +443,19 @@ class MyBellmanUpdateAgent(Agent):
         walls = api.walls(state)
         new_capsules = api.capsules(state)
         rounded_ghost_positions = [(int(ghost[0]), int(ghost[1])) for ghost in ghost_positions]
+
+        # Populate initial good locations with food and capsules
+        self.initial_good_locations = set(food + new_capsules)
         
         # Initialize the rewards grid with None for walls and -1 for all other cells
-        self.rewards = [[None if (x, y) in walls else -1 for x in range(self.width)] for y in range(self.height)]
+        # self.rewards = [[None if (x, y) in walls else -1 for x in range(self.width)] for y in range(self.height)]
+        # Initialize the rewards grid
+        self.rewards = [
+            [None if (x, y) in walls else -20 if (x, y) not in self.initial_good_locations else -1
+            for x in range(self.width)] for y in range(self.height)
+        ]
+        # Mark initial setup as done
+        self.initial_setup_done = True
 
         # Check if chase mode should be deactivated
         ghost_states_with_times = api.ghostStatesWithTimes(state)
@@ -419,8 +468,8 @@ class MyBellmanUpdateAgent(Agent):
             self.total_chase_time = 0
             self.total_chase_distance = 0
 
-        print "Before food mask"
-        self.print_rewards_grid()
+        # print "Before food mask"
+        # self.print_rewards_grid()
 
         pacman = api.whereAmI(state)
         # self.apply_food_mask(food)
@@ -431,8 +480,8 @@ class MyBellmanUpdateAgent(Agent):
             # Assign a weak but positive reward to guide Pacman
             self.rewards[y][x] = self.weak_path_reward  # define this value appropriately
 
-        print "After food mask"
-        self.print_rewards_grid()
+        # print "After food mask"
+        # self.print_rewards_grid()
 
         # Populate model with food rewards
         for y in range(self.height):
@@ -450,13 +499,15 @@ class MyBellmanUpdateAgent(Agent):
 
         # Populate model with capsule rewards
         for capsule in new_capsules:
+            capsule_value = 15
             chase_path, path_length, path_found = self.coordinate_chase_value(state, capsule)
-            # print "Path length:", path_length
+            print "Path length:", path_length
             # print "Chase Path:", chase_path
             if path_found:
-                capsule_value = 100 / path_length
+                capsule_value = 300 / path_length -10
+                print "Capsule value:", capsule_value
             else:
-                capsule_value = -20  # Set to -20 if no beneficial path is found
+                capsule_value = 8 # Set to -20 if no beneficial path is found
             x, y = capsule
             self.rewards[y][x] = capsule_value
             # print "Capsule", capsule, "- value:", capsule_value
@@ -612,57 +663,53 @@ class MyBellmanUpdateAgent(Agent):
 
     def getAction(self, state):
         self.turn += 1
-
-        pacman = api.whereAmI(state)
-
         if self.print_all:
             print "Next Turn:"
-        
-        self.value_iteration(state, self.discount_factor)
-
-        self.print_utilities_grid(state)
-
         legal = api.legalActions(state)
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
 
+        self.value_iteration(state, self.discount_factor)
+        # self.print_utilities_grid(state)
+
+        pacman = api.whereAmI(state)
+        best_move, best_utility = self.find_best_move(legal, pacman)
+
+        final_move = api.makeMove(best_move, legal)
+        if self.print_all:
+            self.print_decision_info(state, pacman, legal, best_move, final_move)
+
+        self.handle_non_determinism(best_move, final_move, state, pacman)
+            
+        return final_move
+
+    def find_best_move(self, legal_moves, pacman_position):
         best_move = None
         best_utility = -float('inf')
-        for move in legal:
-            new_pos = self.get_new_position(pacman, move)
-            if new_pos is not None and self.utilities[new_pos[1]][new_pos[0]] is not None:
+        for move in legal_moves:
+            new_pos = self.get_new_position(pacman_position, move)
+            if new_pos and self.utilities[new_pos[1]][new_pos[0]] is not None:
                 utility = self.utilities[new_pos[1]][new_pos[0]]
-                if self.print_all:
-                    print "Move:", move, "Leads to:", new_pos, "Utility:", utility
                 if utility > best_utility:
                     best_utility = utility
                     best_move = move
+        return best_move, best_utility
 
-        final_move = api.makeMove(best_move, legal)
-        print
-        self.print_game_grid(state, pacman)
+    def print_decision_info(self, legal_moves, best_move, final_move):
+        print "\nCurrent Game State:"
+        print "Legal moves: ", legal_moves
+        print "Best move: " + best_move
+        print "Move being made: ", final_move
 
-        if self.print_all:
-            print "Best move: " + best_move
-            print
-            self.print_game_grid(state, pacman)
-            # Add a print statement to confirm the move being made
-            print "Legal moves before making a decision:", legal
-            print "Move being made: " + str(final_move)
-
-        # Check if the final move is different from the best move
+    def handle_non_determinism(self, best_move, final_move, state, pacman):
         if final_move != best_move:
-            # if self.print_all:
-            self.warning_counter += 1  # Increment the warning counter
-            print "Best move: " + best_move
-            print "Warning {} (of batch): Best move: {} v. Final move: {}".format(self.warning_counter, best_move, final_move)
-            warning_rate = float(self.warning_counter) / self.turn  # Calculate the rate of warnings
+            self.warning_counter += 1
+            self.print_game_grid(state, pacman)
+
+            warning_rate = float(self.warning_counter) / self.turn
+            print "Warning: Non-determinism detected!"
+            print "Warning #{} (of batch): Best move: {} vs. Final move: {}".format(self.warning_counter, best_move, final_move)
             print "Non-determinism rate: {:.2f}%".format(warning_rate * 100)
-            print
-        return final_move
-
-
-
 
 
     # def value_iteration(self, state, discount_factor):
