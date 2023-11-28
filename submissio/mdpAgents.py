@@ -78,7 +78,7 @@ class MDPAgent(Agent):
         self.edible_ghost_reward = 0
 
         # Aesthetics
-        self.print_all = True 
+        self.print_all = False 
         self.warning_counter = 0 
         self.turn = 0
 
@@ -117,13 +117,14 @@ class MDPAgent(Agent):
         return new_pos
     
     def handle_non_determinism(self, best_move, final_move, state, pacman):
-        if final_move != best_move:
-            self.warning_counter += 1
-            warning_rate = float(self.warning_counter) / self.turn
-            print "Warning: Non-determinism detected!"
-            print "Warning #{} (of batch): Best move: {} vs. Final move: {}".format(self.warning_counter, best_move, final_move)
-            print "Non-determinism rate: {:.2f}%".format(warning_rate * 100)
-            print
+        if self.print_all:
+            if final_move != best_move:
+                self.warning_counter += 1
+                warning_rate = float(self.warning_counter) / self.turn
+                print "Warning: Non-determinism detected!"
+                print "Warning #{} (of batch): Best move: {} vs. Final move: {}".format(self.warning_counter, best_move, final_move)
+                print "Non-determinism rate: {:.2f}%".format(warning_rate * 100)
+                print
             
     ### Helper functions for Model (1) and Value Iterate (2)
 
@@ -271,7 +272,7 @@ class MDPAgent(Agent):
 
             # print "Ghost position", rounded_ghost_positions
             if rounded_ghost_positions in self.initial_good_locations:
-                return True, closest_ghost_index, path_to_closest_ghost
+                return True, path_to_closest_ghost
             else:
                 # print "Ghost in den, ignoring."
                 return False, []
@@ -390,6 +391,7 @@ class MDPAgent(Agent):
         if not self.initialised:
             self.initial_good_locations = set(food + new_capsules)
             self.initialised = True
+            print "Game Start"
 
         # Initialise baseline rewards
         self.rewards = [
@@ -541,29 +543,3 @@ class MDPAgent(Agent):
                     value = self.rewards[y][x] if grid_type == 'rewards' else self.utilities[y][x]
                     print "      " if value is None else "{:6.2f}".format(value),
             print
-
-
-    # def print_rewards_grid(self, pacman):
-    #     # if self.print_all:
-    #     print "Rewards Grid:"
-    #     for y in reversed(range(self.height)):
-    #         for x in range(self.width):
-    #             reward = self.rewards[y][x]
-    #             if (x, y) == pacman:
-    #                 print "   x  ",
-    #             else:
-    #             print "      " if reward is None else "{:6.2f}".format(reward),
-    #         print
-    #     print
-    
-    # def print_utilities_grid(self, pacman):
-    #     # if self.print_all:
-    #     print "Utilities Grid:"
-    #     for y in reversed(range(self.height)):
-    #         for x in range(self.width):
-    #             if (x, y) == pacman:
-    #                 print "   x  ",
-    #             else:
-    #                 print "      " if self.utilities[y][x] is None else "{:6.2f}".format(self.utilities[y][x]),
-    #         print
-    #     print
