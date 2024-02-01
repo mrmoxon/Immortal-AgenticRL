@@ -4,7 +4,7 @@
 
 Recently, I was presented with the task of forking the Berkeley AI Pacman Environment and building a Pac-Man that never dies. 
 
-![Opening Image with selection of the included graphs (model-reward-hierarchy, etc.)](agent/Smoothed_Normalised_BO.jpg)
+![Opening Image with selection of the included graphs (model-reward-hierarchy, etc.)](images/Smoothed_Normalised_BO.jpg)
 
 ![Loss-Win Rate](images/BO_Loss_Win.jpg)
 
