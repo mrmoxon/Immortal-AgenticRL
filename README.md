@@ -1,103 +1,125 @@
-<ins>Unfinished 
+
+The Predicate Task Specification maps ψ: R → {0, 1}, turning our coursework on MDPs into a practical decision-making process.
+
+### Model-based Reinforcement Learning
+
+We utilized model-based reinforcement learning, which is distinct from learned or deep-learned approaches with Q-learning/self-play. The states in this environment are near-perfectly Markovian, making traditional Q-learning an option; however, we explored policy iteration to account for certain environmental variables that proved challenging for Pac-Man.
+
+### Utility Modelling and A* Search
+
+The utility model employed an A* search with an exponential fall-off to navigate the maze effectively, while the Bellman equation provided the foundation for our approach. 
+
+![Smoothed Normalized Bayesian Optimization](images/Smoothed_Normalised_BO.jpg)
+
+As shown in the graph above, Bayesian Optimization was critical in tuning the parameters to achieve a balance between exploration and exploitation.
+
+### Challenges and Adjustments
+
+Upon deeper analysis, we discovered that Pac-Man's world is inherently non-deterministic. This realization led us to modify our approach, including the Bellman equation, to better accommodate the unpredictable nature of the game.
+
+![Exponential Decay of Ghost Influence](images/Ghost_Influence.jpg)
+
+The image above illustrates the exponential decay of ghost influence, a crucial aspect of our utility-based model, enabling Pac-Man to anticipate and evade ghosts more effectively.
+
+### Bayesian Optimization in Action
+
+Bayesian Optimization played a pivotal role in iteratively refining our parameters, as depicted in the following terminal output.
+
+![Bayesian Optimization Running](images/BO_running.jpg)
+
+We normalized the parameter space and recalibrated weights after each batch to continually improve the agent's performance.
+
+### Excellence in Numbers
+
+The following table showcases the score differences and the corresponding skill levels assigned to Pac-Man, which were used as benchmarks for agent performance.
+
+![Excellence Score Difference Table](images/Excellence.jpg)
+
+### Strategic Gameplay and Results
+
+Strategic gameplay was essential for our agent's success. By prioritizing certain actions over others, we were able to significantly improve Pac-Man's survivability.
+
+- Ghost danger paths should override all other considerations.
+- Chasing edible ghosts takes precedence only when safe to do so.
+- Capturing capsules becomes a tactical decision.
+- Food clusters and individual pieces are valued based on their safety and proximity.
+
+![Pacman's West Movement Decision](images/West.jpg)
+
+In the scenario above, Pac-Man's decision to move west showcases the application of these strategic considerations.
+
+### Final Thoughts and Observations
+
+This project has been an intensive foray into the world of AI and gaming, and the results have been both fascinating and informative.
+
+![Utilities Grid Terminal Output](images/Terminal_Output.jpg)
+
+The utilities grid and the game's terminal output provide insights into the agent's decision-making process and the outcomes of various strategies.
+
+---
+
+By hosting these images online and replacing `images/` with the actual URL path, you can use the markdown document above to effectively present your Pac-Man project with visual aids and explanations that complement the text.
+
+Rψ​(Ag,Env) = {R | R satisfies ψ in the context of Ag and Env}
 
 
-Recently, I was presented with the task of forking the Berkley AI Pacman Environment and building a Pac-Man that never dies. 
+The Predicate Task Specification maps ψ: R → {0, 1}, turning our coursework on MDPs into a practical decision-making process.
 
-Opening Image with selection of the included graphs (model-reward-hierarchy, etc).
+### Model-based Reinforcement Learning
 
-Contents:
+We utilized model-based reinforcement learning, which is distinct from learned or deep-learned approaches with Q-learning/self-play. The states in this environment are near-perfectly Markovian, making traditional Q-learning an option; however, we explored policy iteration to account for certain environmental variables that proved challenging for Pac-Man.
 
-Model-Based Approach
+### Utility Modelling and A* Search
 
-Reward-Grid Initialisation (w/ select code)
+The utility model employed an A* search with an exponential fall-off to navigate the maze effectively, while the Bellman equation provided the foundation for our approach. 
 
-Bayesian Optimisation on Parameters
+![Smoothed Normalized Bayesian Optimization](images/Smoothed_Normalised_BO.jpg)
 
-Further reserach
+As shown in the graph above, Bayesian Optimization was critical in tuning the parameters to achieve a balance between exploration and exploitation.
 
+### Challenges and Adjustments
 
+Upon deeper analysis, we discovered that Pac-Man's world is inherently non-deterministic. This realization led us to modify our approach, including the Bellman equation, to better accommodate the unpredictable nature of the game.
 
-I recently developed an agent using Berkley’s Pacman dataset, to solve pacman using a utility modelling system/markov decision process.
+![Exponential Decay of Ghost Influence](images/Ghost_Influence.jpg)
 
-Rψ​(Ag,Env)={R∣R satisfies ψ in the context of Ag and Env}
+The image above illustrates the exponential decay of ghost influence, a crucial aspect of our utility-based model, enabling Pac-Man to anticipate and evade ghosts more effectively.
 
-With Predicate Task Specification of that maps ψ: R → {0, 1}
+### Bayesian Optimization in Action
 
-Ingenuously, my professor turned our coursework on MDPs INTO a Markov decision process when he presented us with this grid:
+Bayesian Optimization played a pivotal role in iteratively refining our parameters, as depicted in the following terminal output.
 
+![Bayesian Optimization Running](images/BO_running.jpg)
 
+We normalized the parameter space and recalibrated weights after each batch to continually improve the agent's performance.
 
-Model-based reinforcement learning, as opposed to learned/deep-learned with Q-learning/self-play. I would like to take this further into the area of multi-agent play, particularly multi-agent reinforcement learning. Intro: Self-play and supervised learning, etc. search space? Q-learning could be used in the traditional sense as the states are almost perfectly markovian. However, some policy iteration system over time would be beneficial, as there are some environmental variables that give pacman a hard time; such as when it eats a ghost in the ‘den’, and dies instantly when the ghost respawns on top of it.In Qlearning, discount factor would be modelled with a similar approach to chess.
+### Excellence in Numbers
 
-Utility modelling: A* search with exponential fall-off
+The following table showcases the score differences and the corresponding skill levels assigned to Pac-Man, which were used as benchmarks for agent performance.
 
-Bellman equation
+![Excellence Score Difference Table](images/Excellence.jpg)
 
-Scope: balancing weights more effectively…?
+### Strategic Gameplay and Results
 
-Some non-trivial amount of time into the project, I realised that Pacman is non-deterministic, after running a long debugging process, confused why the optimal direction wasn’t being picked. This means we must modify the bellman equation ^
+Strategic gameplay was essential for our agent's success. By prioritizing certain actions over others, we were able to significantly improve Pac-Man's survivability.
 
-While this has low impact on computation time, it means that when before Pacman had no chance of getting caught by a ghost right behind him on a long corridor, it now means that a corridor of length 5 will have around 32% chance of killing Pacman, with logarithmic diminishing odds over time. To incorporate this, we can balance the odds of dying in long corridors by increasing the danger of ghosts. Now, Pacman will consider them at max_distance = 3, allowing it to see further round corners in order to increase survival chances. The point 3 squares away from a ghost is now around 2/3 less attractive than it was before, meaning Pacman will change his path if there.
+- Ghost danger paths should override all other considerations.
+- Chasing edible ghosts takes precedence only when safe to do so.
+- Capturing capsules becomes a tactical decision.
+- Food clusters and individual pieces are valued based on their safety and proximity.
 
-Ghosts initially implemented so that pacman would find the shortest path to nearest ghost and chase along it. If it ate a ghost, it moves on to next assuming it is near enough. To avoid entering the den (one of the main WhyDies) it ignores ghosts when they’re not at an original food_list location (show set() code)
+![Pacman's West Movement Decision](images/West.jpg)
 
-When the ghosts are edible they move at half speed, so A* is remarkably effective.
+In the scenario above, Pac-Man's decision to move west showcases the application of these strategic considerations.
 
-One of the problems with making a highly cautious agent is that it’s increasingly possible for the agent to get ‘chased off’ the final pieces of food, particularly if it is clearing things as efficiently as mine. 
+### Final Thoughts and Observations
 
-One way of fixing this would be with an exploration function. Another would be with a falloff for the food that is vast....
+This project has been an intensive foray into the world of AI and gaming, and the results have been both fascinating and informative.
 
-My pacman consistently eats both ghosts every time it eats a capsule (x % of the time)
+![Utilities Grid Terminal Output](images/Terminal_Output.jpg)
 
-Main reason it dies: non-deterministic moves mean it is exposed to missteps, especially when chasing an edible ghost.
+The utilities grid and the game's terminal output provide insights into the agent's decision-making process and the outcomes of various strategies.
 
+---
 
-
-CENTRE^
-
-To overcome this (when upping utility for the shortest path to eat each ghost, pacman can ignore the danger of the second ghost severely, due to the Bellman implementation) we need to ensure that the dangerous ghost interrupts Pacman’s greediness. Here’s an example of what I mean. The dangerous ghost is literally in the way of the A* path to the edible ghost. Bellman only iterates over the highest values, which here are 15, while the ghosts are -200. This means that despite being in the direct path, Pacman (@) will barrel straight into the ghost.
-
-Hierarchy of rewards: 
-
-Ghost danger paths should override everything.
-
-Then A* path to edible ghosts (some of time).
-
-Then capsules.
-
-Then food clusters.
-
-Then food.
-
-Then empty spaces.
-
-For easy debugging, set the terminal scrollback to 100k - after a run find all the times pacman died and I used this configuration to retrace steps.
-
-
-
-This is propagated along the A* paths.
-
-I run A* search so that pacman never gets lost (always at least one food to travel to), and then make this very weak.
-
-The capsule should be more of a tactical capture. It should consider the position of pacman and how close the ghosts are. Particularly for small maze...
-
-
-
-
-
-
-
-
-
-III: Bayesian Optimisation
-
-
-
-Normalize the parameter space. Settings proposed.
-
-This takes 1:15 seconds per batch, then weights are recalibrated.
-
-
-
-Consider editing this graph to make the trend more obvious. Why does this trend make sense?
-
+By hosting these images online and replacing `images/` with the actual URL path, you can use the markdown document above to effectively present your Pac-Man project with visual aids and explanations that complement the text.
