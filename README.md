@@ -1,4 +1,6 @@
 
+# Unifinished Write-Up: Building an Immortal Pacman
+
 The Predicate Task Specification maps ψ: R → {0, 1}, turning our coursework on MDPs into a practical decision-making process.
 
 ### Model-based Reinforcement Learning
