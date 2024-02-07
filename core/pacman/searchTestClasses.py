@@ -18,7 +18,7 @@ import textwrap
 
 # import project specific code
 import layout
-import pacman
+import main
 from search import SearchProblem
 
 # helper function for printing solutions in solution files
@@ -270,7 +270,7 @@ class PacmanSearchTest(testClasses.TestCase):
     def getSolInfo(self, search, searchAgents):
         alg = getattr(search, self.alg)
         lay = layout.Layout([l.strip() for l in self.layout_text.split('\n')])
-        start_state = pacman.GameState()
+        start_state = main.GameState()
         start_state.initialize(lay, 0)
 
         problemClass = getattr(searchAgents, self.searchProblemClassName)
@@ -387,12 +387,12 @@ class CornerProblemTest(testClasses.TestCase):
 
     def solution(self, search, searchAgents):
         lay = layout.Layout([l.strip() for l in self.layoutText.split('\n')])
-        gameState = pacman.GameState()
+        gameState = main.GameState()
         gameState.initialize(lay, 0)
         problem = searchAgents.CornersProblem(gameState)
         path = search.bfs(problem)
 
-        gameState = pacman.GameState()
+        gameState = main.GameState()
         gameState.initialize(lay, 0)
         visited = getStatesFromPath(gameState.getPacmanPosition(), path)
         top, right = gameState.getWalls().height-2, gameState.getWalls().width-2
@@ -475,7 +475,7 @@ class HeuristicTest(testClasses.TestCase):
 
     def setupProblem(self, searchAgents):
         lay = layout.Layout([l.strip() for l in self.layoutText.split('\n')])
-        gameState = pacman.GameState()
+        gameState = main.GameState()
         gameState.initialize(lay, 0)
         problemClass = getattr(searchAgents, self.searchProblemClassName)
         problem = problemClass(gameState)
@@ -559,7 +559,7 @@ class HeuristicGrade(testClasses.TestCase):
 
     def setupProblem(self, searchAgents):
         lay = layout.Layout([l.strip() for l in self.layoutText.split('\n')])
-        gameState = pacman.GameState()
+        gameState = main.GameState()
         gameState.initialize(lay, 0)
         problemClass = getattr(searchAgents, self.searchProblemClassName)
         problem = problemClass(gameState)
@@ -633,7 +633,7 @@ class ClosestDotTest(testClasses.TestCase):
 
     def solution(self, searchAgents):
         lay = layout.Layout([l.strip() for l in self.layoutText.split('\n')])
-        gameState = pacman.GameState()
+        gameState = main.GameState()
         gameState.initialize(lay, 0)
         path = searchAgents.ClosestDotSearchAgent().findPathToClosestDot(gameState)
         return path
@@ -691,7 +691,7 @@ class CornerHeuristicSanity(testClasses.TestCase):
     def execute(self, grades, moduleDict, solutionDict):
         search = moduleDict['search']
         searchAgents = moduleDict['searchAgents']
-        game_state = pacman.GameState()
+        game_state = main.GameState()
         lay = layout.Layout([l.strip() for l in self.layout_text.split('\n')])
         game_state.initialize(lay, 0)
         problem = searchAgents.CornersProblem(game_state)
@@ -748,7 +748,7 @@ class CornerHeuristicSanity(testClasses.TestCase):
 
         # solve problem and write solution
         lay = layout.Layout([l.strip() for l in self.layout_text.split('\n')])
-        start_state = pacman.GameState()
+        start_state = main.GameState()
         start_state.initialize(lay, 0)
         problem = searchAgents.CornersProblem(start_state)
         solution = search.astar(problem, searchAgents.cornersHeuristic)
@@ -771,7 +771,7 @@ class CornerHeuristicPacman(testClasses.TestCase):
         total = 0
         true_cost = float(solutionDict['cost'])
         thresholds = map(int, solutionDict['thresholds'].split())
-        game_state = pacman.GameState()
+        game_state = main.GameState()
         lay = layout.Layout([l.strip() for l in self.layout_text.split('\n')])
         game_state.initialize(lay, 0)
         problem = searchAgents.CornersProblem(game_state)
@@ -809,7 +809,7 @@ class CornerHeuristicPacman(testClasses.TestCase):
 
         # solve problem and write solution
         lay = layout.Layout([l.strip() for l in self.layout_text.split('\n')])
-        start_state = pacman.GameState()
+        start_state = main.GameState()
         start_state.initialize(lay, 0)
         problem = searchAgents.CornersProblem(start_state)
         solution = search.astar(problem, searchAgents.cornersHeuristic)

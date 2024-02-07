@@ -30,7 +30,7 @@
 # The code here was written by Simon Parsons, based on examples from
 # the PacMan AI projects.
 
-from pacman import Directions
+from main import Directions
 import util
 
 sideLimit = 1

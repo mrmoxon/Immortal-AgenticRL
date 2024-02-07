@@ -23,7 +23,7 @@ import projectParams
 import random
 random.seed(0)
 try: 
-    from pacman import GameState
+    from main import GameState
 except:
     pass
 

@@ -12,7 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-from pacman import Directions
+from main import Directions
 from game import Agent
 import random
 import game
