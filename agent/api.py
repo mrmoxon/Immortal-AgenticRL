@@ -31,7 +31,7 @@
 # the PacMan AI projects.
 
 from random import random
-from main import Directions
+from core.pacman.main import Directions
 import util
 
 #

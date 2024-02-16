@@ -585,6 +585,8 @@ def readCommand( argv ):
 
     return args
 
+
+
 def loadAgent(pacman, nographics):
     # Looks through all pythonPath Directories for the right module,
     pythonPathStr = os.path.expandvars("$PYTHONPATH")
@@ -594,19 +596,62 @@ def loadAgent(pacman, nographics):
         pythonPathDirs = pythonPathStr.split(';')
     pythonPathDirs.append('.')
 
+    # for moduleDir in pythonPathDirs:
+    #     if not os.path.isdir(moduleDir): continue
+    #     moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('Agents.py')]
+    #     print("Found modules: ", moduleNames)  # Print the module names
+    #     for modulename in moduleNames:
+    #         print ("modulename: ", modulename)
+    #         try:
+    #             module = __import__(modulename[:-3])
+    #         except ImportError:
+    #             print("ImportError for module {}: {}".format(modulename, e))
+    #             continue
+    #         if pacman in dir(module):
+    #             if nographics and modulename == 'keyboardAgents.py':
+    #                 raise Exception('Using the keyboard requires graphics (not text display)')
+    #             return getattr(module, pacman)
+    # raise Exception('The agent ' + pacman + ' is not specified in any *Agents.py.')
+
     for moduleDir in pythonPathDirs:
         if not os.path.isdir(moduleDir): continue
-        moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('gents.py')]
+        moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('Agents.py')]
+        print("Found modules: ", moduleNames)  # Print the module names
         for modulename in moduleNames:
+            print ("modulename: ", modulename)
             try:
                 module = __import__(modulename[:-3])
-            except ImportError:
+            except ImportError as e:  # Catch the exception as e
+                print("ImportError for module {}: {}".format(modulename, e))
                 continue
             if pacman in dir(module):
                 if nographics and modulename == 'keyboardAgents.py':
                     raise Exception('Using the keyboard requires graphics (not text display)')
                 return getattr(module, pacman)
     raise Exception('The agent ' + pacman + ' is not specified in any *Agents.py.')
+
+# def loadAgent(pacman, nographics):
+#     # Looks through all pythonPath Directories for the right module,
+#     pythonPathStr = os.path.expandvars("$PYTHONPATH")
+#     if pythonPathStr.find(';') == -1:
+#         pythonPathDirs = pythonPathStr.split(':')
+#     else:
+#         pythonPathDirs = pythonPathStr.split(';')
+#     pythonPathDirs.append('.')
+
+#     for moduleDir in pythonPathDirs:
+#         if not os.path.isdir(moduleDir): continue
+#         moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('gents.py')]
+#         for modulename in moduleNames:
+#             try:
+#                 module = __import__(modulename[:-3])
+#             except ImportError:
+#                 continue
+#             if pacman in dir(module):
+#                 if nographics and modulename == 'keyboardAgents.py':
+#                     raise Exception('Using the keyboard requires graphics (not text display)')
+#                 return getattr(module, pacman)
+#     raise Exception('The agent ' + pacman + ' is not specified in any *Agents.py.')
 
 def replayGame( layout, actions, display ):
     import pacmanAgents, ghostAgents

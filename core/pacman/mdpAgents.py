@@ -28,9 +28,9 @@
 # The agent here is was written by Simon Parsons, based on the code in
 # pacmanAgents.py
 
-from main import Directions
+from core.pacman.main import Directions
 from game import Agent
-import api
+import agent.api as api
 import random
 import game
 import util
@@ -381,6 +381,7 @@ class MDPAgent(Agent):
     ### 1. Model Rewards Main Function
 
     def model_rewards(self, state):
+        # print "Hello"
         pacman = api.whereAmI(state)
         food = api.food(state)
         ghost_positions = api.ghosts(state)
