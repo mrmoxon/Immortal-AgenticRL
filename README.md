@@ -1,7 +1,9 @@
 
-# Unifinished Write-Up: Building an Immortal Pacman
+# In-Progress Write-Up: Building an Immortal Pacman
 
 Recently, I was presented with the task of forking the Berkeley AI Pacman Environment and building a Pac-Man that never dies. 
+
+I have implemented a Q-learning approach, and an approach modelling with SARSA. 
 
 ## Contents:
 
