@@ -5,6 +5,8 @@ Recently, I was presented with the task of forking the Berkeley AI Pacman Enviro
 
 I have implemented a Q-learning approach, and an approach modelling with SARSA. 
 
+Q-learning approach: https://github.com/mrmoxon/q-learning-agent 
+
 ## Contents:
 
 - Model-Based Approach
